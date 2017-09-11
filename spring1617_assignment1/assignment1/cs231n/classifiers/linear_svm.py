@@ -67,6 +67,7 @@ def svm_loss_vectorized(W, X, y, reg):
   Inputs and outputs are the same as svm_loss_naive.
   """
 
+  dW = np.zeros(W.shape) # initialize the gradient as zero
   #############################################################################
   # TODO:                                                                     #
   # Implement a vectorized version of the structured SVM loss, storing the    #
@@ -77,11 +78,13 @@ def svm_loss_vectorized(W, X, y, reg):
   scores = scores - tscores[:, np.newaxis] + 1
   judge = scores > 0
   trues = np.sum(judge, axis=1) - 1
-  loss = (np.sum(np.select([judge], [scores])) - scores.shape[0]) / X.shape[0] + reg * np.sum(W * W)
+  loss = (np.sum(np.select([judge], [scores])) - scores.shape[0])
+  loss /= X.shape[0]
+  loss += reg * np.sum(W * W)
   judge = judge.astype(int)
   judge[np.arange(scores.shape[0]), y] = -trues
-  dW = judge.T.dot(X).T / X.shape[0] + 2 * reg * W
-
+  dW = judge.T.dot(X).T / X.shape[0]
+  dW += 2 * reg * W
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
