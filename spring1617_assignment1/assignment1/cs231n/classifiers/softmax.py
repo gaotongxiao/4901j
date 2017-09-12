@@ -35,21 +35,16 @@ def softmax_loss_naive(W, X, y, reg):
   loss = 0.0
   for i in xrange(num_train):
     scores = X[i].dot(W)
-    tempsum = 0.0
+    temp_sum = 0.0
+    max_index = np.argmax(scores)
     max_score = np.amax(scores)
+    scores = np.exp(scores - max_score)
+    temp_sum = np.sum(scores)
     for j in xrange(num_classes):
-      scores[j] = np.exp(scores[j] - max_score)
-      tempsum += scores[j]
-    loss += -np.log(scores[y[i]] / tempsum)
-    
-      '''
-      margin = scores[j] - correct_class_score + 1 # note delta = 1
-      if margin > 0:
-        loss += margin
-        dW[:, j] += X[i]
-        dW[:, y[i]] -= X[i]
-      '''
-
+      if j == y[i]:
+        dW[:, j] -= X[i]
+      dW[:, j] += scores[j] * X[i] / temp_sum
+    loss += -np.log(scores[y[i]] / temp_sum)
   # Right now the loss is a sum over all training examples, but we want it
   # to be an average instead so we divide by num_train.
   loss /= num_train
