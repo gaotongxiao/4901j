@@ -79,7 +79,10 @@ def softmax_loss_vectorized(W, X, y, reg):
   max_scores = np.amax(scores, axis=1)
   scores = np.exp(scores - max_scores[:, np.newaxis])
   scores_sum = np.sum(scores, axis=1)
-  loss = np.sum(-np.log(scores[range(X.shape[0]), y] / scores_sum)) / X.shape[0]
+  scores = scores / scores_sum[:, np.newaxis]
+  loss = np.sum(-np.log(scores[range(X.shape[0]), y])) / X.shape[0]
+  scores[np.arange(scores.shape[0]), y] -= 1
+  dW = scores.T.dot(X).T / X.shape[0]
 
   #############################################################################
   #                          END OF YOUR CODE                                 #
