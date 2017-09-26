@@ -76,7 +76,15 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+    fc1 = X.dot(W1) + b1
+    fc1_relu = np.fmax(np.zeros_like(fc1), fc1)
+    scores = fc1_relu.dot(W2) + b2
+    # fully_connect_2 = fully_connect_1_relu.dot(W2) + b2
+    '''
+    fully_connect_2_exp = np.exp(fully_connect_2 - 1)
+    fully_connect_2_exp_sum = np.sum(fully_connect_2_exp, axis=1)
+    scores = fully_connect_2_exp / fully_connect_2_exp_sum[:, np.newaxis] 
+    '''
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -93,7 +101,13 @@ class TwoLayerNet(object):
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
-    pass
+    max_scores = np.amax(scores, axis=1)
+    fc2_exp = np.exp(scores - max_scores[:, np.newaxis])
+    fc2_exp_sum = np.sum(fc2_exp, axis=1)
+    s = fc2_exp / fc2_exp_sum[:, np.newaxis]
+    loss = np.sum(-np.log(s[range(X.shape[0]), y]))
+    loss /= N
+    loss += reg * (np.sum(np.square(W1)) + np.sum(np.square(W2)))
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -105,7 +119,10 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    grads['W1'] = 2 * reg * W1
+    W1_cond = fc1 > 0
+    W1_cond.astype(int)
+    grads['W1'] += 
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
