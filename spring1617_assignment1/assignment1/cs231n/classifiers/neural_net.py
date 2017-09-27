@@ -105,7 +105,8 @@ class TwoLayerNet(object):
     fc2_exp = np.exp(scores - max_scores[:, np.newaxis])
     fc2_exp_sum = np.sum(fc2_exp, axis=1)
     s = fc2_exp / fc2_exp_sum[:, np.newaxis]
-    loss = np.sum(-np.log(s[range(X.shape[0]), y]))
+    s_c = s[range(X.shape[0]), y]
+    loss = np.sum(-np.log(s_c))
     loss /= N
     loss += reg * (np.sum(np.square(W1)) + np.sum(np.square(W2)))
     #############################################################################
@@ -119,10 +120,15 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    grads['W1'] = 2 * reg * W1
-    W1_cond = fc1 > 0
-    W1_cond.astype(int)
-    grads['W1'] += 
+    dscores = s.copy()
+    dscores[range(N), y] = s_c - 1
+    dscores /= N
+    grads["b2"] = np.sum(dscores, axis=0) 
+    grads["W2"] = 2 * reg * W2 + fc1_relu.T.dot(dscores)  
+    cond = (fc1_relu > 0).astype(int)
+    dfc1 = cond * dscores.dot(W2.T)
+    grads["b1"] = np.sum(dfc1, axis=0)
+    grads["W1"]  = 2 * reg * W1 + X.T.dot(dfc1)
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
