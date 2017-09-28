@@ -79,12 +79,6 @@ class TwoLayerNet(object):
     fc1 = X.dot(W1) + b1
     fc1_relu = np.fmax(np.zeros_like(fc1), fc1)
     scores = fc1_relu.dot(W2) + b2
-    # fully_connect_2 = fully_connect_1_relu.dot(W2) + b2
-    '''
-    fully_connect_2_exp = np.exp(fully_connect_2 - 1)
-    fully_connect_2_exp_sum = np.sum(fully_connect_2_exp, axis=1)
-    scores = fully_connect_2_exp / fully_connect_2_exp_sum[:, np.newaxis] 
-    '''
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -172,7 +166,9 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      pass
+      randIdx = np.random.choice(X.shape[0], batch_size)
+      X_batch = X[randIdx]
+      y_batch = y[randIdx]
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -187,7 +183,8 @@ class TwoLayerNet(object):
       # using stochastic gradient descent. You'll need to use the gradients   #
       # stored in the grads dictionary defined above.                         #
       #########################################################################
-      pass
+      for n in self.params.keys():
+        self.params[n] -= learning_rate * grads[n]
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -232,7 +229,18 @@ class TwoLayerNet(object):
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    pass
+    W1 = self.params["W1"]
+    W2 = self.params["W2"]
+    b1 = self.params["b1"]
+    b2 = self.params["b2"]
+    fc1 = X.dot(W1) + b1
+    fc1_relu = np.fmax(np.zeros_like(fc1), fc1)
+    scores = fc1_relu.dot(W2) + b2
+    max_scores = np.amax(scores, axis=1)
+    fc2_exp = np.exp(scores - max_scores[:, np.newaxis])
+    fc2_exp_sum = np.sum(fc2_exp, axis=1)
+    s = fc2_exp / fc2_exp_sum[:, np.newaxis]
+    y_pred = np.argmax(s, axis=1)
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
