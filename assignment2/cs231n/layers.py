@@ -170,7 +170,13 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # variance, storing your result in the running_mean and running_var   #
         # variables.                                                          #
         #######################################################################
-        pass
+        sample_mean = np.mean(x, axis=0)
+        sample_var = np.var(x, axis=0)
+        running_mean = momentum * running_mean + (1 - momentum) * sample_mean
+        running_var = momentum * running_var + (1 - momentum) * sample_var
+        u = (x - sample_mean) / (np.sqrt(sample_var) + eps)
+        out = gamma * u + beta
+        cache = (x, sample_mean, sample_var, u, eps, gamma)
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -181,7 +187,10 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
-        pass
+        sample_mean = np.mean(x, axis=0)
+        sample_var = np.var(x, axis=0)
+        out = (x - sample_mean) / (np.sqrt(sample_var) + eps)
+        out = gamma * out + beta
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
@@ -196,7 +205,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
 
 def batchnorm_backward(dout, cache):
-    """
+    """(x - sample_mean) / (np.sqrt(sample_var) + eps
     Backward pass for batch normalization.
 
     For this implementation, you should write out a computation graph for
@@ -217,7 +226,26 @@ def batchnorm_backward(dout, cache):
     # TODO: Implement the backward pass for batch normalization. Store the    #
     # results in the dx, dgamma, and dbeta variables.                         #
     ###########################################################################
-    pass
+    (x, sample_mean, sample_var, u, eps, gamma) = cache
+    n = dout.shape[0]
+    dgamma = np.sum(dout * u, axis=0)
+    dbeta = np.sum(dout, axis = 0)
+    du = gamma * dout
+    dde = du * (1 / ((sample_var + eps) ** 0.5))
+    dnu = np.sum(du * (x - sample_mean), axis=0)
+    # dnu_1 = (dnu * -0.5 * ((sample_var + eps) ** (-1.5)))[np.newaxis, :]
+    dnu_0 = dnu * -1 / ((sample_var + eps))
+    dnu_1 = dnu_0 * 0.5 * ((sample_var + eps) ** (-0.5))
+    dnu_2 = dnu_1 * np.ones_like(x) / n
+    dnu_3 = dnu_2 * 2 * (x - sample_mean)
+    dminus = dde + dnu_3
+    dEx = -1 * np.sum(dminus, axis=0) 
+    dx = dminus + dEx / n
+    # dEx = np.sum((-1 / n) * dde, axis=0)
+    # dx += dEx
+
+    # dx = denominator / sample_var * du
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -247,7 +275,23 @@ def batchnorm_backward_alt(dout, cache):
     # should be able to compute gradients with respect to the inputs in a     #
     # single statement; our implementation fits on a single 80-character line.#
     ###########################################################################
-    pass
+    (x, sample_mean, sample_var, u, eps, gamma) = cache
+    n = dout.shape[0]
+    dgamma = np.sum(dout * u, axis=0)
+    dbeta = np.sum(dout, axis = 0)
+    du = gamma * dout
+    vpe = sample_var + eps
+    xmm = x - sample_mean
+    N, D = x.shape
+    '''
+    tempmat = 2 / N * (xmm)
+    dVar = np.sum(tempmat, axis=0) / (-N) + tempmat
+    dx = (1 - (1 / N)) * (vpe ** (-0.5)) - xmm * dVar * (0.5) * (vpe ** (-3/2))
+    '''
+    dm = du * 1 / np.sqrt(vpe) * (1 + (xmm ** 2) * (- 1 / vpe) / n)
+    dx = - np.sum(dm, axis=0) / N
+    dx = dm + dx
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
