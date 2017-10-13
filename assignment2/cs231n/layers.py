@@ -391,7 +391,23 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    pad = conv_param['pad']
+    stride = conv_param['stride']
+    H_prime = 1 + (H + 2 * pad - HH) / stride
+    W_prime = 1 + (W + 2 * pad - WW) / stride
+
+    new_x = np.pad(x, ((0,), (0,), (pad,), (pad,)), 'constant', constant_values=0)
+    
+    out = np.zeros([N, F, H_prime, W_prime])
+    for n in range(N):
+        for hh in range(H_prime):
+            for ww in range(W_prime):
+                for f in range(F):
+                    cal = new_x[n, :, hh * stride:hh * stride + HH, ww * stride:ww * stride + WW] * w[f] 
+                    out[n, f, hh, ww] = np.sum(cal) + b[f]
+        
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -407,16 +423,30 @@ def conv_backward_naive(dout, cache):
     - dout: Upstream derivatives.
     - cache: A tuple of (x, w, b, conv_param) as in conv_forward_naive
 
+    - x: Input data of shape (N, C, H, W)
+    - w: Filter weights of shape (F, C, HH, WW)
+    - b: Biases, of shape (F,)
+    - out: Output data, of shape (N, F, H', W') where H' and W' are given by
+      H' = 1 + (H + 2 * pad - HH) / stride
+      W' = 1 + (W + 2 * pad - WW) / stride
+    - cache: (x, w, b, conv_param)
+
     Returns a tuple of:
     - dx: Gradient with respect to x
     - dw: Gradient with respect to w
     - db: Gradient with respect to b
     """
     dx, dw, db = None, None, None
+    x, w, b, conv_param = cache
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    N, F, H_prime, W_prime = dout.shape
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    db = np.sum(dout, axis=(0, 2, 3))
+    for 
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
