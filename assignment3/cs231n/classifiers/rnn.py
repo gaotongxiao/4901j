@@ -141,11 +141,15 @@ class CaptioningRNN(object):
         captions_in_vec, cache2 = word_embedding_forward(captions_in, W_embed)
         if self.cell_type == 'rnn':
           hiddens, cache3 = rnn_forward(captions_in_vec, initial_hidden, Wx, Wh, b)
+        elif self.cell_type == 'lstm':
+          hiddens, cache3 = lstm_forward(captions_in_vec, initial_hidden, Wx, Wh, b)
         scores, cache4 = temporal_affine_forward(hiddens, W_vocab, b_vocab)
         loss, dscores = temporal_softmax_loss(scores, captions_out, mask)
         dout, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dscores, cache4)
         if self.cell_type == 'rnn':
           dvec, dih, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dout, cache3)
+        elif self.cell_type == 'lstm':
+          dvec, dih, grads['Wx'], grads['Wh'], grads['b'] = lstm_backward(dout, cache3)
         grads['W_embed'] = word_embedding_backward(dvec, cache2)
         _, grads['W_proj'], grads['b_proj'] = affine_backward(dih, cache1)
 
@@ -212,9 +216,14 @@ class CaptioningRNN(object):
         ###########################################################################
         hidden, _ = affine_forward(features, W_proj, b_proj)
         word_index = np.tile(self._start, [features.shape[0]])
+        if self.cell_type == 'lstm':
+          ceil_state = np.zeros_like(hidden)
         for i in range(max_length):
           word_embedded = W_embed[word_index]
-          hidden, _ = rnn_step_forward(word_embedded, hidden, Wx, Wh, b)
+          if self.cell_type == 'lstm':
+            hidden, ceil_state, _ = lstm_step_forward(word_embedded, hidden, ceil_state, Wx, Wh, b)
+          else:
+            hidden, _ = rnn_step_forward(word_embedded, hidden, Wx, Wh, b)
           scores, _ = affine_forward(hidden, W_vocab, b_vocab)
           word_index = np.argmax(scores, axis=1)
           captions[:, i] = word_index
